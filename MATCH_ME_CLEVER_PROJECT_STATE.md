@@ -1408,3 +1408,242 @@ V1.3+
 3. 继续 V1.1.5 的 English Requirement / CET-4 等级识别。
 4. 完成并执行 V1.1.5 Acceptance Tests。
 5. 后续只增量记录新的项目进度，不重复已有 Career Profile / Resume 信息。
+
+
+------------------------------------------------------------------------
+
+# 40. 2026-09-23 Source Experiment Decision — Domestic Recruitment Crawlers
+
+## 用户明确的 V1.2 前期实验原则
+
+本项目当前进入 **真实求职可用性优先的前期实验阶段**。
+
+用户明确要求：国内招聘软件本身就是 Branch 1 的可实验数据源。不要把“是否存在官方 API”作为开始实验的前置条件。
+
+因此，之前文档中将 Official API / Licensed Provider 放在 Source 开发前置位置的表述，不能解释为“没有官方 API → 不做平台实验”。
+
+正确解释：
+
+```text
+Branch 1 — Personal Job Search Experiment
+        ↓
+先尝试真实招聘平台网页 / 浏览器可访问数据
+        ↓
+建立 Source Adapter
+        ↓
+验证真实职位能否进入 Match Me Clever
+        ↓
+记录 success / partial / challenged / blocked
+        ↓
+再决定长期稳定化方式
+```
+
+Official API / Licensed Provider 属于后续长期稳定化路线（Branch 2），不是 Branch 1 实验的前置条件。
+
+**本决策覆盖之前“研究阶段不要立即写 Adapter”的旧表述。**
+
+## 四个国内招聘平台：当前实验对象
+
+本阶段优先实验：
+
+1. 51Job / 前程无忧
+2. BOSS直聘
+3. 智联招聘
+4. 猎聘
+
+对应 Job Source Framework：
+
+```text
+Domestic Apps
+├── BOSS
+├── 51Job
+├── Zhaopin
+└── Liepin
+```
+
+后续再继续 Public Sources、Company ATS。User Import 永久保留。
+
+## 当前找到的爬虫 / Adapter 参考
+
+### 四站点综合实验框架：RAYNLIU2005/-Multi-threadedCrawler
+
+GitHub 项目公开说明明确包含 Boss 直聘、前程无忧（51Job）、智联招聘、猎聘网，并在 scraper/source/ 下组织各站点解析器。Liepin Source 的 README 还明确描述了搜索数据监听、分页、去重等实现。
+
+它是当前四站点实验中最值得研究的综合参考之一，但只是参考实现，不直接复制进 Match Me Clever。
+
+我们只吸收：页面 / 浏览器访问方式、Source-specific parsing、Job ID / Company ID 提取、Pagination、Lifecycle 字段、Challenge / Blocked 检测、RawJob 映射。
+
+### 51Job
+
+已找到公开参考项目：
+
+- chenjiandongx/51job-spider
+- JaapTeam/51job
+- FesonX/JobCrawler
+- isixe/JobSpider
+
+其中 chenjiandongx/51job-spider 是经典 51Job Python 爬虫；GitHub Topic 当前还能看到 2024 年更新的 Selenium 项目，以及 2026 年更新、同时涉及 51Job / Liepin 的求职自动化项目。
+
+实验目标不是复用旧代码，而是确认 51Job 当前页面是否仍可读取、如何获得稳定 Job ID、职位详情和分页数据。
+
+### BOSS直聘
+
+已找到公开参考：
+
+- eatmoreduck/boss-zhipin-scraper
+- poboll/bosszhipin_spider
+- Viy1204/recruiting-copilot
+
+其中 poboll/bosszhipin_spider 在 GitHub Topic 页面显示于 2026 年更新，说明采用 Python + Pyppeteer 按城市和关键词采集 BOSS 职位。
+
+实验重点：搜索、城市、职位详情、Job ID、Company ID、分页，以及 Challenge / Blocked 状态。
+
+### 智联招聘
+
+已找到：
+
+- LoboNoRoot/zhilianZhaopin-scraper-spider
+- uc0154/zhilianZhaopin-scraper-spider
+- wqh0109663/JobSpiders
+
+前两个公开仓库直接以 zhilianZhaopin-scraper-spider 命名；wqh0109663/JobSpiders 的公开信息显示其包含 51Job、智联招聘和拉勾等站点的采集实践。
+
+实验重点：确认当前搜索结果页、详情页、Job ID、Company ID、分页和字段结构。
+
+### 猎聘
+
+已找到：
+
+- Ruiww/LiePinAnalysis
+- ChoungJX/Liepin-spider
+- RAYNLIU2005/-Multi-threadedCrawler 中的 SourceLiepin
+
+其中综合框架中的 SourceLiepin 是当前研究重点之一，其公开 README 描述了数据包监听、分页、去重和浏览器行为模拟。
+
+浏览器行为模拟只作为研究其数据访问方式的参考，不意味着 Match Me Clever 要实现 CAPTCHA / 风控绕过。
+
+## 当前实验结论
+
+截至 2026-09-23，公开 GitHub 资料足以证明：国内招聘平台可以作为真实 Source Adapter 的前期实验对象。
+
+但不能从“存在开源爬虫”直接推断当前页面一定仍可抓、所有字段仍一致、自动化访问一定没有限制，或第三方代码可以直接运行。
+
+因此必须采用：
+
+```text
+找到参考实现
+      ↓
+检查当前平台页面
+      ↓
+做最小真实请求 / 浏览器读取实验
+      ↓
+解析 1 个真实职位
+      ↓
+解析搜索结果
+      ↓
+确认 Job ID / Company ID
+      ↓
+进入 RawJob
+```
+
+而不是复制旧代码后宣称平台已经接入。
+
+## V1.2 Domestic Apps 实验顺序
+
+第一轮只做这四个：51Job、BOSS、Zhaopin、Liepin。
+
+统一验收：
+
+```text
+D01 Keyword Search
+D02 City Filter
+D03 Search Result Parsing
+D04 Job Detail Parsing
+D05 Job ID
+D06 Company ID
+D07 Source URL
+D08 Salary
+D09 Location
+D10 Description
+D11 Pagination
+D12 True Zero Result
+D13 Challenge / Blocked Detection
+D14 RawJob Mapping
+D15 Existing Career Engine Match
+```
+
+特别要求：Challenge / Blocked ≠ 0 jobs。
+
+## 当前项目的 Source Strategy 修正
+
+### Branch 1
+
+明确为 Personal Job Search Experiment / Core Job Discovery。
+
+允许并鼓励：国内招聘平台网页实验、浏览器读取实验、公开页面解析、已有开源 crawler / parser 的技术研究、Source-specific adapter、User Import fallback。
+
+### Branch 2
+
+负责 Official APIs、Licensed Providers、Stable integrations、Long-term maintainable sources。
+
+因此：
+
+```text
+没有官方 API
+        ≠
+Branch 1 不能实验
+```
+
+而是：
+
+```text
+没有官方 API
+        ↓
+先进行网页 / 浏览器 Source Adapter 实验
+        ↓
+记录真实可用性与失败状态
+        ↓
+长期再寻找稳定来源
+```
+
+## 重要边界
+
+本项目仍然不把以下内容作为能力目标：CAPTCHA bypass、登录绕过、风控绕过、Cookie 偷取 / 导出、隐藏接口破解、未经授权批量抓取受限制内容。
+
+如果正常实验遇到这些限制，blocked / challenged 本身就是有效实验结果。
+
+目标是：**让用户现在真的可以通过 Match Me Clever 找到真实职位，而不是先把项目做成一个“理论上有 API 才能工作”的架构。**
+
+## 下一步
+
+现在不继续研究 Public Sources、Company ATS。
+
+直接进入：
+
+```text
+51Job Adapter
+    ↓
+真实 51Job URL / 搜索页实验
+    ↓
+RawJob
+    ↓
+现有 Job Understanding
+    ↓
+现有 Career Engine
+    ↓
+用户实际看到匹配结果
+```
+
+51Job 验证完成后，再依次实验 BOSS、Zhaopin、Liepin。四个平台完成第一轮后，再继续另外两个 Source Branch。
+
+------------------------------------------------------------------------
+
+# 41. Decision Override
+
+本节为当前项目控制文件中关于 Source 实验阶段的最新决策。
+
+如果本文件前文出现“先确认官方 API / Licensed Provider 才开始 Adapter”或“研究阶段发现平台后不要立即写 Adapter”，均以本节为准。
+
+**当前阶段就是实验 Adapter。**
+
+官方 API / Licensed Provider 是长期稳定化路线，不是国内招聘平台实验的准入条件。
