@@ -1379,3 +1379,32 @@ V1.3+
 ------------------------------------------------------------------------
 
 # END OF PROJECT STATE
+
+
+------------------------------------------------------------------------
+
+# 39. 2026-09-23 Progress Update
+
+## 已完成
+
+- JobRole 独立模型：将职位类型与 Career Direction 分离。
+- Job Role → Career Direction 映射：避免仅因 JD 中出现“运营”等关键词造成岗位方向误判。
+- JD Evidence Layer：开始提取市场研究、竞品分析、电商运营、广告运营、社媒、Email Marketing、AI/电商相关性及负向信号等显式证据。
+- Evidence → Career Engine：将职位证据接入现有 Career Engine，同时保持原有匹配公式不变。
+- Job Detail 已接入 Job Understanding。
+- “外贸业务销售”测试 JD 当前识别为 `jobRole=international-sales`、`careerDirection=explore`；JD 中出现“店铺运营/平台运营”不会再直接将职位类型判定为 operations。
+- `match-me-clever` GitHub `main` 最新已知 commit：`b6a8cdc` — `Fix evidence signal source syntax`。
+
+## 当前问题
+
+- Lovable Preview 与 GitHub `main` 当前代码表现存在不一致，需要先确认 Lovable ↔ GitHub Sync、active branch 和 Preview 状态。
+- Lovable 当前免费 build credits 为 0，因此在确认同步关系前，不继续依赖 Preview 判断代码是否生效。
+- 尚未声称 build/test 已通过，需要后续实际验证。
+
+## 下一步
+
+1. 确认 Lovable ↔ GitHub 同步状态及 active branch。
+2. 验证 Preview 是否运行最新 GitHub 代码。
+3. 继续 V1.1.5 的 English Requirement / CET-4 等级识别。
+4. 完成并执行 V1.1.5 Acceptance Tests。
+5. 后续只增量记录新的项目进度，不重复已有 Career Profile / Resume 信息。
